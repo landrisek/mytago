@@ -52,8 +52,8 @@ func(builder Builder) Add(column string, value interface{}) Builder {
 	return builder
 }
 
-func(builder Builder) Inject() Builder {
-	configor.Load(&builder.Config, "config.yml")
+func(builder Builder) Inject(config string) Builder {
+	configor.Load(&builder.Config, config)
 	database := builder.Config.Database
 	builder.database, _ = sql.Open("mysql", database.User + ":" + database.Password  + "@tcp(" + database.Host +
 		":" + strconv.Itoa(database.Port) + ")/" + database.Name + "?parseTime=true&collation=utf8_czech_ci")
@@ -76,7 +76,7 @@ func(builder Builder) Fetch() []map[string]string {
 		row := make(map[string]string, 0)
 		err := rows.Scan(pointers...)
 		if err != nil {
-			fmt.Print(err)
+			log.Panic(err)
 		}
 		for key := range data {
 			row[columns[key]] = string(data[key])
