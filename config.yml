@@ -1,0 +1,11 @@
+file: ../../csv/export.csv
+concurrency: 100
+database:
+  host: myhost
+  name: dbname
+  user: user
+  password: pass
+  port: 3306
+separator: ;
+tables:
+  key: my_table
