@@ -4,13 +4,13 @@ import ("bufio"
 	"database/sql"
 	"github.com/jinzhu/configor"
 	_ "github.com/go-sql-driver/mysql"
+	"fmt"
 	"log"
 	"os"
 	"strconv"
 	"strings"
-	"fmt"
 	"regexp"
-)
+	"sync")
 
 type Builder struct {
 	add map[string]interface{}
@@ -232,16 +232,20 @@ func(builder Builder) Write(callback func(row map[string]string) string) Builder
 		defer builder.database.Close()
 		close(queue)
 	}()
+	var waitGroup sync.WaitGroup
+	waitGroup.Add(builder.Config.Concurrency)
 	for i := 0; i < builder.Config.Concurrency; i++ {
-		go write(queue, complete, file)
+		go write(&waitGroup, queue, complete, file)
 	}
 	for i := 0; i < builder.Config.Concurrency; i++ {
 		<-complete
 	}
+	waitGroup.Wait()
 	return builder
 }
 
-func write(queue chan string, complete chan bool, file *os.File) {
+func write(waitGroup *sync.WaitGroup, queue chan string, complete chan bool, file *os.File) {
+	defer waitGroup.Done()
 	for row := range queue {
 		file.Write([]byte(row + "\n"))
 	}
